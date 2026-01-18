@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg1:#0f172a;         
+    --bg2:#1e293b;         
+    --accent:#E1BF7F;      
+    --glass: rgba(255,255,255,.08);
+    --glass-border: rgba(255,255,255,.25);
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:grid;
+    place-items:center;
+    background: radial-gradient(1200px 800px at 20% 20%, #334155 0%, transparent 60%),
+                radial-gradient(900px 700px at 80% 80%, #0ea5e9 0%, transparent 55%),
+                linear-gradient(135deg, var(--bg1), var(--bg2));
+    color:#e5e7eb;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Noto Sans", Arial, sans-serif;
+  }
+
+  .wrap{
+    width:min(920px, 92vw);
+    padding:32px;
+  }
+
+  .title{
+    font-size:clamp(80px, 2.5vw, 28px);
+    letter-spacing:.04em;
+    margin:0 50px 80px;
+    color:#f8fafc;
+    display:flex; 
+    align-items:center; 
+    gap:.6em;
+  }
+
+  .badge{
+    font-size:.8rem;
+    padding:.25em .6em;
+    border-radius:999px;
+    background:linear-gradient(135deg, rgba(225,191,127,.25), rgba(225,191,127,.05));
+    border:1px solid var(--glass-border);
+    backdrop-filter: blur(6px);
+  }
+
+  .glass{
+    position:relative;
+    border-radius:24px;
+    background: var(--glass);
+    border:1px solid var(--glass-border);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px) saturate(120%);
+    padding:28px;
+    overflow:hidden;
+  }
+
+  .glass::after{
+    content:"";
+    position:absolute; inset:-2px;
+    border-radius:24px;
+    pointer-events:none;
+    background:
+      conic-gradient(from 180deg, transparent 0 20%, rgba(225,191,127,.25) 20% 30%, transparent 30% 55%, rgba(14,165,233,.25) 55% 65%, transparent 65% 100%);
+    filter:blur(14px) saturate(140%);
+    opacity:.55;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:18px;
+  }
+  @media (max-width:640px){
+    .grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .unit{
+    position:relative;
+    padding:20px 18px;
+    border-radius:18px;
+    background: radial-gradient(120% 120% at 30% 20%, rgba(255,255,255,.12), rgba(255,255,255,.04));
+    border:1px solid rgba(255,255,255,.18);
+    text-align:center;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .unit:hover{ 
+    transform: translateY(-2px) scale(1.01); 
+    box-shadow: 0 10px 24px rgba(0,0,0,.25); 
+  }
+
+  .value{
+    font-variant-numeric: tabular-nums lining-nums;
+    font-size: clamp(34px, 7vw, 56px);
+    line-height:1;
+    font-weight:800;
+    color:#f1f5f9;
+    text-shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+
+  .label{
+    margin-top:8px;
+    font-size:.9rem;
+    letter-spacing:.12em;
+    text-transform: uppercase;
+    color:#cbd5e1;
+  }
+
+  .bar{
+    margin-top:22px;
+    height:10px; 
+    width:100%;
+    border-radius:999px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.16);
+    overflow:hidden;
+  }
+  .bar > i{
+    display:block; 
+    height:100%; 
+    width:0%;
+    background: linear-gradient(90deg, var(--accent), #38bdf8);
+    transition: width .6s ease;
+  }
+
+  .note{
+    margin-top:14px;
+    font-size:.9rem;
+    color:#cbd5e1;
+    display:flex; 
+    justify-content:space-between; 
+    gap:12px; 
+    flex-wrap:wrap;
+  }
+  .accent{ 
+    color: var(--accent); 
+    font-weight:700; 
+  }
+
+  .hidden{ display:none !important; }
+  .done{
+    text-align:center; 
+    padding:24px 16px; 
+    font-size:1.1rem; 
+    color:#e2e8f0;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="title">🎉 Coming Soon</h1>
+
+    <div class="glass" id="countdown-card" aria-live="polite">
+      <div class="grid" role="group" aria-label="Countdown Timer">
+        <div class="unit">
+          <div class="value" id="d">00</div>
+          <div class="label">Days</div>
+        </div>
+        <div class="unit">
+          <div class="value" id="h">00</div>
+          <div class="label">Hours</div>
+        </div>
+        <div class="unit">
+          <div class="value" id="m">00</div>
+          <div class="label">Minutes</div>
+        </div>
+        <div class="unit">
+          <div class="value" id="s">00</div>
+          <div class="label">Seconds</div>
+        </div>
+      </div>
+
+      <div class="bar" aria-hidden="true"><i id="progress"></i></div>
+
+      <div class="note">
+        <span><span class="accent"></span></span>
+        <span id="deadlineText"></span>
+      </div>
+
+      <div id="done" class="done hidden">⏰ Countdown has ended!</div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // Set countdown end time
+  const endTs = new Date("2025-12-09T23:59:59+08:00").getTime();
+  const tz = "Asia/Taipei";
+
+  const nowTpe = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+  const startTs = nowTpe.getTime();
+
+  const el = {
+    d: document.getElementById("d"),
+    h: document.getElementById("h"),
+    m: document.getElementById("m"),
+    s: document.getElementById("s"),
+    bar: document.getElementById("progress"),
+    done: document.getElementById("done"),
+    deadlineText: document.getElementById("deadlineText"),
+  };
+
+  // Display the end time
+  const endDateStr = new Date(endTs).toLocaleString("en-US", { timeZone: tz, hour12:false });
+  el.deadlineText.textContent = "End Time (" + tz + "): " + endDateStr;
+
+  const totalMs = endTs - startTs;
+  const pad2 = (n) => String(n).padStart(2, "0");
+
+  const tick = () => {
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: tz })).getTime();
+    let diff = endTs - now;
+
+    if (diff <= 0) {
+      ["d","h","m","s"].forEach(id => el[id].textContent = "00");
+      el.bar.style.width = "100%";
+      el.done.classList.remove("hidden");
+      return clearInterval(timer);
+    }
+
+    const d = Math.floor(diff / (1000*60*60*24)); diff -= d * 86400000;
+    const h = Math.floor(diff / (1000*60*60));    diff -= h * 3600000;
+    const m = Math.floor(diff / (1000*60));       diff -= m * 60000;
+    const s = Math.floor(diff / 1000);
+
+    el.d.textContent = pad2(d);
+    el.h.textContent = pad2(h);
+    el.m.textContent = pad2(m);
+    el.s.textContent = pad2(s);
+
+    const progressed = (totalMs - (endTs - now)) / totalMs;
+    el.bar.style.width = Math.max(0, Math.min(100, progressed * 100)).toFixed(3) + "%";
+  };
+
+  const timer = setInterval(tick, 1000);
+  tick();
+})();
+</script>
+</body>
+</html>
